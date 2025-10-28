@@ -44,7 +44,7 @@ python train.py \
 # === [4] Enhance (inference) a few files ===
 echo "🎧 [TEST] Enhancing sample noisy speech ..."
 python enhancement.py \
-    --ckpt "$EXP_DIR/sgmse_demo/checkpoints/epoch=009.ckpt" \
+    --ckpt "$EXP_DIR/sgmse_demo/checkpoints/epoch=326-step=408750.ckpt" \
     --input_dir "$DEMO_DATA/test/noisy" \
     --output_dir "$EXP_DIR/sgmse_demo/enhanced" \
     --sampler pc \
