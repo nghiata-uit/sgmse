@@ -113,23 +113,7 @@ train_speech_enhancement() {
 
     python train.py \
         --base_dir "$DATA_DIR/$DATASET" \
-        --gpus $NUM_GPUS \
-        --strategy ddp \
-        --batch_size $BATCH_SIZE \
-        --num_epochs $EPOCHS \
-        --num_workers 8 \
-        --learning_rate 1e-4 \
-        --ema_decay 0.999 \
-        --sigma_min 0.05 \
-        --sigma_max 0.5 \
-        --gamma 1.5 \
-        --t_eps 0.03 \
-        --N $N_STEPS \
-        --corrector_steps $CORRECTOR_STEPS \
-        --snr_min 0 \
-        --snr_max 20 \
-        --default_root_dir "$CHECKPOINT_DIR/$MODEL_NAME" \
-        --model_name "$MODEL_NAME"
+        --nolog
 
     log "Training completed: $MODEL_NAME"
 }
@@ -142,22 +126,7 @@ train_dereverberation() {
 
     python train.py \
         --base_dir "$DATA_DIR/$DATASET" \
-        --gpus $NUM_GPUS \
-        --strategy ddp \
-        --batch_size $BATCH_SIZE \
-        --num_epochs $EPOCHS \
-        --num_workers 8 \
-        --learning_rate 1e-4 \
-        --ema_decay 0.999 \
-        --sigma_min 0.05 \
-        --sigma_max 0.5 \
-        --gamma 1.5 \
-        --t_eps 0.03 \
-        --N $N_STEPS \
-        --corrector_steps $CORRECTOR_STEPS \
-        --default_root_dir "$CHECKPOINT_DIR/$MODEL_NAME" \
-        --model_name "$MODEL_NAME" \
-        --task dereverberation
+        --nolog
 
     log "Training completed: $MODEL_NAME"
 }
