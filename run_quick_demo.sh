@@ -7,7 +7,7 @@ pip install -U "huggingface_hub[cli]" datasets soundfile pyarrow --quiet
 
 # === Step 2: Download dataset using hf CLI ===
 echo ">>> Downloading VoiceBank-DEMAND-16k dataset..."
-hf dataset download JacobLinCool/VoiceBank-DEMAND-16k --repo-type dataset --local-dir ./VoiceBank_DEMAND_16k
+hf download JacobLinCool/VoiceBank-DEMAND-16k --repo-type dataset --local-dir ./VoiceBank_DEMAND_16k
 
 # === Step 3: Convert .parquet -> .wav ===
 echo ">>> Converting parquet files to WAV..."
