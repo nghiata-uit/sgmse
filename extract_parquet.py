@@ -1,23 +1,21 @@
-import os
-import soundfile as sf
 from datasets import load_dataset
+import soundfile as sf
+import os
 
-def save_audio(split_name, dataset_split):
-    os.makedirs(f"data/demo/{split_name}/noisy", exist_ok=True)
-    os.makedirs(f"data/demo/{split_name}/clean", exist_ok=True)
-
-    for i, sample in enumerate(dataset_split):
-        noisy_audio = sample["noisy"]["array"]
-        clean_audio = sample["clean"]["array"]
-
-        # Save both audio files (16 kHz)
-        sf.write(f"data/demo/{split_name}/noisy/{i:05d}.wav", noisy_audio, 16000)
-        sf.write(f"data/demo/{split_name}/clean/{i:05d}.wav", clean_audio, 16000)
-
-        if i % 1000 == 0:
-            print(f"Saved {i} samples from {split_name}")
-
+print("Loading dataset from Hugging Face...")
 dataset = load_dataset("JacobLinCool/VoiceBank-DEMAND-16k")
-# Save both splits
-save_audio("train", dataset["train"])
-save_audio("valid", dataset["test"])
+
+def save_split(split_name, data):
+    base_dir = f"VoiceBank_DEMAND_16k_wav/{split_name}"
+    os.makedirs(f"{base_dir}/clean", exist_ok=True)
+    os.makedirs(f"{base_dir}/noisy", exist_ok=True)
+
+    for i, s in enumerate(data):
+        sf.write(f"{base_dir}/clean/{i:05d}.wav", s["clean"]["array"], 16000)
+        sf.write(f"{base_dir}/noisy/{i:05d}.wav", s["noisy"]["array"], 16000)
+        if (i+1) % 100 == 0:
+            print(f"  → Processed {i+1} samples for {split_name}")
+
+save_split("train", dataset["train"])
+save_split("test", dataset["test"])
+print("✅ Conversion complete! WAV files saved in VoiceBank_DEMAND_16k_wav/")
