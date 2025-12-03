@@ -13,9 +13,12 @@ from mamba_ssm.ops.triton.layer_norm import RMSNorm
 def create_mamba_unit(dimension, layer_index=0, fused_add_norm=False, residual_in_fp32=False):
     """
     Create a Single-direction Mamba unit with:
-    - state_size = 16
-    - conv_kernel_size = 4
-    - expansion_ratio = 2
+    - state_size = 16 (SSM state dimension, controls model capacity)
+    - conv_kernel_size = 4 (local conv kernel for temporal dependencies)
+    - expansion_ratio = 2 (hidden dimension expansion factor)
+    
+    These hyperparameters are based on the Mamba-SEUNet reference implementation
+    and provide a good balance between performance and computational efficiency.
     
     Args:
         dimension: Input/output dimension
@@ -99,14 +102,17 @@ class TSMambaBlock(nn.Module):
     def forward(self, x):
         b, c, t, f = x.size()
         
-        # Temporal path
+        # Temporal path: Process along time dimension
+        # Reshape to (B*F, T, C) to process each frequency bin's temporal sequence
         x = x.permute(0, 3, 2, 1).contiguous().view(b * f, t, c)
         x = self.time_mamba(x) + x
         
-        # Frequency path
+        # Frequency path: Process along frequency dimension
+        # Reshape to (B*T, F, C) to process each time frame's frequency sequence
         x = x.view(b, f, t, c).permute(0, 2, 1, 3).contiguous().view(b * t, f, c)
         x = self.freq_mamba(x) + x
         
+        # Reshape back to original (B, C, T, F) format
         return x.view(b, t, f, c).permute(0, 3, 1, 2)
 
 
