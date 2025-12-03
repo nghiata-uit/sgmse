@@ -1,78 +1,139 @@
+"""
+Script để download VoiceBank-DEMAND-16k dataset từ HuggingFace
+"""
+
 import os
-import soundfile as sf
 from datasets import load_dataset
+import soundfile as sf
 from tqdm import tqdm
-import gc
+import numpy as np
 
 
-def save_audio_files_stream(dataset_stream, split_name, output_dir):
     """
-    Xử lý dataset theo dạng stream (từng file một) để không tốn RAM.
+    Download VoiceBank-DEMAND-16k dataset và extract thành .wav files
+
+    Args:
+        output_dir: Thư mục lưu dataset
     """
-    audio_keys = ['noisy', 'clean']
 
-    # Tạo thư mục trước
-    for key in audio_keys:
-        os.makedirs(os.path.join(output_dir, split_name, key), exist_ok=True)
+    print("=" * 70)
+    print("=" * 70)
 
-    print(f"🚀 Đang xử lý tập dữ liệu: {split_name} (Streaming Mode)...")
+    # Tạo thư mục output
+    os.makedirs(output_dir, exist_ok=True)
 
-    # Streaming dataset không có hàm len(), nên ta dùng biến đếm thủ công
-    count = 0
+    # Tạo các thư mục con
+    splits = ['train', 'test']
+    audio_types = ['clean', 'noisy']
 
-    # Duyệt qua từng item trong stream
-    for item in tqdm(dataset_stream, desc=f"Extracting {split_name}"):
-        try:
-            for key in audio_keys:
-                if key in item:
-                    # Lấy thông tin audio
-                    audio_data = item[key]['array']
-                    sample_rate = item[key]['sampling_rate']
+    for split in splits:
+        for audio_type in audio_types:
+            path = os.path.join(output_dir, split, audio_type)
+            os.makedirs(path, exist_ok=True)
+            print(f"✓ Created directory: {path}")
 
-                    # Tạo tên file theo index
-                    filename = f"file_{count:05d}.wav"
-
-                    # Lưu file
-                    save_path = os.path.join(output_dir, split_name, key, filename)
-                    sf.write(save_path, audio_data, sample_rate)
-
-            count += 1
-
-            # Giải phóng bộ nhớ RAM định kỳ mỗi 1000 files (phòng hờ)
-            if count % 1000 == 0:
-                gc.collect()
-
-        except Exception as e:
-            print(f"⚠️ Lỗi ở file thứ {count}: {e}")
-            continue
-
-    print(f"✅ Đã trích xuất xong {count} files cho tập {split_name}.")
-
-
-def main():
-    DATASET_ID = "JacobLinCool/VoiceBank-DEMAND-16k"
-    OUTPUT_DIR = "./voicebank_demand_16k_extracted"
-
-    print(f"📥 Đang kết nối tới Hugging Face (Streaming Mode): {DATASET_ID}...")
+    print("\n" + "=" * 70)
+    print("LOADING DATASET FROM HUGGINGFACE...")
+    print("=" * 70)
 
     try:
-        # QUAN TRỌNG: streaming=True giúp tải từng phần, KHÔNG tải hết vào RAM
-        dataset = load_dataset(DATASET_ID, streaming=True)
+            dataset = load_dataset("JacobLinCool/VoiceBank-DEMAND-16k")
+
+        print(f"  Available splits: {list(dataset.keys())}")
+
+        # Process từng split
+        for split in dataset.keys():
+            print(f"\n{'=' * 70}")
+            print(f"PROCESSING {split.upper()} SET")
+            print(f"{'=' * 70}")
+
+            clean_dir = os.path.join(output_dir, split, 'clean')
+
+                    # Tạo filename
+                    if 'speaker_id' in sample and 'utterance_id' in sample:
+                        filename = f"p{sample['speaker_id']}_{sample['utterance_id']:03d}.wav"
+                    else:
+                        filename = f"sample_{idx:05d}.wav"
+
+                        output_path = os.path.join(clean_dir, filename)
+                        sf.write(output_path, clean_audio, clean_sr)
+
+
+                        noisy_sr = sample['noisy']['sampling_rate']
+
+                        output_path = os.path.join(noisy_dir, filename)
+                        sf.write(output_path, noisy_audio, noisy_sr)
+
+
+        # Print summary
+
+
     except Exception as e:
-        print(f"❌ Lỗi kết nối: {e}")
-        return
+        print(f"\n❌ Error: {e}")
+        print("\nTroubleshooting:")
+        print("1. Kiểm tra internet connection")
+        print("2. Cài đặt required packages:")
+        raise
 
-    print("✅ Kết nối thành công! Bắt đầu trích xuất...")
-    print(f"📂 Output dir: {os.path.abspath(OUTPUT_DIR)}")
-    print("-" * 50)
 
-    # Duyệt qua các split (train, test) có trong dataset
-    for split in dataset.keys():
-        save_audio_files_stream(dataset[split], split, OUTPUT_DIR)
+    """In ra thông tin tổng quan về dataset"""
 
-    print("-" * 50)
-    print("🎉 Hoàn tất! Bạn có thể kiểm tra dung lượng thư mục.")
+    print("\n" + "=" * 70)
+    print("DATASET SUMMARY")
+    print("=" * 70)
+
+        clean_dir = os.path.join(output_dir, split, 'clean')
+        noisy_dir = os.path.join(output_dir, split, 'noisy')
+
+
+        print(f"  Location: {output_dir}/{split}/")
+
+    print("\n" + "=" * 70)
+    print("DIRECTORY STRUCTURE:")
+    print("=" * 70)
+    print(f"{output_dir}/")
+            print(f"├── {split}/")
+
+    print("\n✅ DOWNLOAD AND EXTRACTION COMPLETED!")
+    print(f"📁 All files saved to: {os.path.abspath(output_dir)}")
+
+
+def verify_audio_files(output_dir, num_samples=3):
+    """
+    Verify một số audio files để đảm bảo đã extract đúng
+    """
+    print("\n" + "=" * 70)
+    print("VERIFYING AUDIO FILES...")
+    print("=" * 70)
+
+    for split in ['train', 'test']:
+        clean_dir = os.path.join(output_dir, split, 'clean')
+        noisy_dir = os.path.join(output_dir, split, 'noisy')
+
+        clean_files = sorted([f for f in os.listdir(clean_dir) if f.endswith('.wav')])[:num_samples]
+
+        for filename in clean_files:
+            clean_path = os.path.join(clean_dir, filename)
+            noisy_path = os.path.join(noisy_dir, filename)
+
+
+                print(f"\n  File: {filename}")
+                print(f"    ✓ Files verified")
 
 
 if __name__ == "__main__":
-    main()
+    # Download và extract dataset
+    output_directory = "./voicebank_demand_16k"
+
+
+        # Verify audio files
+        verify_audio_files(output_directory, num_samples=3)
+
+        print("\n" + "=" * 70)
+        print("READY TO USE!")
+        print("=" * 70)
+        print("\nBạn có thể sử dụng dataset với:")
+        print(f"  Clean train audio: {output_directory}/train/clean/")
+        print(f"  Noisy train audio: {output_directory}/train/noisy/")
+        print(f"  Clean test audio:  {output_directory}/test/clean/")
+        print(f"  Noisy test audio:  {output_directory}/test/noisy/")
