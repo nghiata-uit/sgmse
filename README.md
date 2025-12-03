@@ -21,6 +21,35 @@ Please also check out our follow-up work with code available:
 - Jean-Marie Lemercier, Julius Richter, Simon Welker, Timo Gerkmann, [*"StoRM: A Diffusion-based Stochastic Regeneration Model for Speech Enhancement and Dereverberation"*](https://ieeexplore.ieee.org/document/10180108), IEEE/ACM Transactions on Audio, Speech, Language Processing, vol. 31, pp. 2724 -2737, 2023. [[github]](https://github.com/sp-uhh/storm)
 - Bunlong Lay, Simon Welker, Julius Richter, Timo Gerkmann, [*"Reducing the Prior Mismatch of Stochastic Differential Equations for Diffusion-based Speech Enhancement"*](https://www.isca-archive.org/interspeech_2023/lay23_interspeech.html), ISCA Interspeech, Dublin, Ireland, Aug. 2023. [[github]](https://github.com/sp-uhh/sgmse-bbed)
 
+## Mamba-3 Architecture Integration
+
+This repository now includes an experimental Mamba-3 architecture integration that replaces CNN-based layers with Mamba blocks for improved temporal-frequency processing. The Mamba architecture provides:
+
+- **Efficient long-range dependency modeling** without explicit attention mechanisms
+- **Bidirectional processing** along both temporal and frequency dimensions
+- **Reduced model complexity** through unified Mamba blocks
+
+### Quick Start with Mamba
+
+1. Install Mamba dependencies:
+   ```bash
+   pip install mamba-ssm>=1.0.0 causal-conv1d>=1.0.0 triton>=2.0.0
+   ```
+
+2. Train with Mamba backbone:
+   ```bash
+   python train.py --backbone ncsnpp_mamba [other args...]
+   ```
+
+3. Test the implementation:
+   ```bash
+   python test_mamba_backbone.py
+   ```
+
+For detailed information about the Mamba integration, see [MAMBA_INTEGRATION.md](MAMBA_INTEGRATION.md) and [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md).
+
+**Note**: The Mamba integration is adapted from [mamba-seunet](https://github.com/nghiata-uit/mamba-seunet) and requires CUDA for optimal performance.
+
 ## Installation
 
 - Create a new virtual environment with Python 3.11 (we have not tested other Python versions, but they may work).
