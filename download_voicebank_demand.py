@@ -2,64 +2,77 @@ import os
 import soundfile as sf
 from datasets import load_dataset
 from tqdm import tqdm
+import gc
 
-def save_audio_files(dataset_split, split_name, output_dir):
+
+def save_audio_files_stream(dataset_stream, split_name, output_dir):
     """
-    Hàm duyệt qua từng sample trong dataset và lưu file .wav
+    Xử lý dataset theo dạng stream (từng file một) để không tốn RAM.
     """
-    # Các cột chứa dữ liệu audio trong dataset này thường là 'noisy' và 'clean'
-    # Nếu dataset có cấu trúc khác, bạn có thể print(dataset_split[0]) để kiểm tra key.
     audio_keys = ['noisy', 'clean']
 
-    print(f"🚀 Đang xử lý tập dữ liệu: {split_name}...")
+    # Tạo thư mục trước
+    for key in audio_keys:
+        os.makedirs(os.path.join(output_dir, split_name, key), exist_ok=True)
 
-    for i, item in tqdm(enumerate(dataset_split), total=len(dataset_split), desc=f"Extracting {split_name}"):
-        for key in audio_keys:
-            if key in item:
-                # Tạo đường dẫn thư mục: output/split/type (ví dụ: data/test/clean)
-                save_folder = os.path.join(output_dir, split_name, key)
-                os.makedirs(save_folder, exist_ok=True)
+    print(f"🚀 Đang xử lý tập dữ liệu: {split_name} (Streaming Mode)...")
 
-                # Lấy thông tin audio
-                audio_data = item[key]['array']
-                sample_rate = item[key]['sampling_rate']
+    # Streaming dataset không có hàm len(), nên ta dùng biến đếm thủ công
+    count = 0
 
-                # Tạo tên file. Vì HF dataset thường không giữ tên file gốc trong object audio,
-                # ta dùng index hoặc ID nếu có. Dataset này thường không có cột filename gốc rõ ràng
-                # trong object audio, nên ta đặt tên theo format: file_{index}.wav
-                # Tuy nhiên, nếu cột 'fileid' hoặc tương tự tồn tại, ta sẽ dùng nó.
-                # (Kiểm tra dataset này thường không có sẵn file ID ở lớp ngoài cùng, nên dùng index cho an toàn)
-                filename = f"file_{i:05d}.wav"
+    # Duyệt qua từng item trong stream
+    for item in tqdm(dataset_stream, desc=f"Extracting {split_name}"):
+        try:
+            for key in audio_keys:
+                if key in item:
+                    # Lấy thông tin audio
+                    audio_data = item[key]['array']
+                    sample_rate = item[key]['sampling_rate']
 
-                # Lưu file
-                file_path = os.path.join(save_folder, filename)
-                sf.write(file_path, audio_data, sample_rate)
+                    # Tạo tên file theo index
+                    filename = f"file_{count:05d}.wav"
+
+                    # Lưu file
+                    save_path = os.path.join(output_dir, split_name, key, filename)
+                    sf.write(save_path, audio_data, sample_rate)
+
+            count += 1
+
+            # Giải phóng bộ nhớ RAM định kỳ mỗi 1000 files (phòng hờ)
+            if count % 1000 == 0:
+                gc.collect()
+
+        except Exception as e:
+            print(f"⚠️ Lỗi ở file thứ {count}: {e}")
+            continue
+
+    print(f"✅ Đã trích xuất xong {count} files cho tập {split_name}.")
+
 
 def main():
-    # 1. Cấu hình
     DATASET_ID = "JacobLinCool/VoiceBank-DEMAND-16k"
     OUTPUT_DIR = "./voicebank_demand_16k_extracted"
 
-    print(f"📥 Đang tải dataset từ Hugging Face: {DATASET_ID}...")
+    print(f"📥 Đang kết nối tới Hugging Face (Streaming Mode): {DATASET_ID}...")
 
-    # 2. Download và Load dataset (sẽ được cache tự động bởi thư viện datasets)
     try:
-        # Load toàn bộ các split (train, test)
-        dataset = load_dataset(DATASET_ID)
+        # QUAN TRỌNG: streaming=True giúp tải từng phần, KHÔNG tải hết vào RAM
+        dataset = load_dataset(DATASET_ID, streaming=True)
     except Exception as e:
-        print(f"❌ Lỗi khi tải dataset: {e}")
+        print(f"❌ Lỗi kết nối: {e}")
         return
 
-    print("✅ Đã tải dataset thành công!")
-    print(f"📂 Dữ liệu sẽ được trích xuất ra thư mục: {os.path.abspath(OUTPUT_DIR)}")
+    print("✅ Kết nối thành công! Bắt đầu trích xuất...")
+    print(f"📂 Output dir: {os.path.abspath(OUTPUT_DIR)}")
     print("-" * 50)
 
-    # 3. Duyệt qua các split (thường là 'train' và 'test') và lưu file
+    # Duyệt qua các split (train, test) có trong dataset
     for split in dataset.keys():
-        save_audio_files(dataset[split], split, OUTPUT_DIR)
+        save_audio_files_stream(dataset[split], split, OUTPUT_DIR)
 
     print("-" * 50)
-    print("🎉 Hoàn tất! Kiểm tra thư mục output.")
+    print("🎉 Hoàn tất! Bạn có thể kiểm tra dung lượng thư mục.")
+
 
 if __name__ == "__main__":
     main()
