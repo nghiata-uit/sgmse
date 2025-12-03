@@ -1,6 +1,6 @@
 """
-Script để download VoiceBank-DEMAND-16k dataset từ HuggingFace
-và extract các file audio thành .wav - OPTIMIZED VERSION
+Script to download VoiceBank-DEMAND-16k dataset from HuggingFace
+and extract audio files to .wav format - OPTIMIZED VERSION
 """
 
 import os
@@ -13,11 +13,11 @@ import numpy as np
 
 def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", streaming=True):
     """
-    Download VoiceBank-DEMAND-16k dataset và extract thành .wav files
+    Download VoiceBank-DEMAND-16k dataset and extract to .wav files
     
     Args:
-        output_dir: Thư mục lưu dataset
-        streaming: Sử dụng streaming mode để tiết kiệm RAM (default: True)
+        output_dir: Directory to save the dataset
+        streaming: Use streaming mode to save RAM (default: True)
     """
     
     print("=" * 70)
@@ -25,10 +25,10 @@ def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", s
     print("=" * 70)
     print(f"Streaming mode: {streaming}")
     
-    # Tạo thư mục output
+    # Create output directory
     os.makedirs(output_dir, exist_ok=True)
     
-    # Tạo các thư mục con
+    # Create subdirectories
     splits = ['train', 'test']
     audio_types = ['clean', 'noisy']
     
@@ -43,7 +43,7 @@ def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", s
     print("=" * 70)
     
     try:
-        # Load dataset với streaming mode để tiết kiệm RAM
+        # Load dataset with streaming mode to save RAM
         if streaming:
             dataset = load_dataset("JacobLinCool/VoiceBank-DEMAND-16k", streaming=True)
             print(f"\n✓ Dataset loaded in STREAMING mode (memory efficient)")
@@ -53,7 +53,7 @@ def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", s
         
         print(f"  Available splits: {list(dataset.keys())}")
         
-        # Process từng split
+        # Process each split
         for split in dataset.keys():
             print(f"\n{'=' * 70}")
             print(f"PROCESSING {split.upper()} SET")
@@ -70,18 +70,18 @@ def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", s
             # Process samples one by one (streaming compatible)
             print(f"\nProcessing samples...")
             
-            # Tạo progress bar
+            # Create progress bar
             pbar = tqdm(desc=f"{split}", unit="samples")
             
             for idx, sample in enumerate(dataset[split]):
                 try:
-                    # Tạo filename
+                    # Create filename
                     if 'speaker_id' in sample and 'utterance_id' in sample:
                         filename = f"p{sample['speaker_id']}_{sample['utterance_id']:03d}.wav"
                     else:
                         filename = f"sample_{idx:05d}.wav"
                     
-                    # Extract và save CLEAN audio
+                    # Extract and save CLEAN audio
                     try:
                         clean_audio = np.array(sample['clean']['array'], dtype=np.float32)
                         clean_sr = sample['clean']['sampling_rate']
@@ -97,7 +97,7 @@ def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", s
                         print(f"\n  ⚠️  Error saving clean file {filename}: {e}")
                         error_count += 1
                     
-                    # Extract và save NOISY audio
+                    # Extract and save NOISY audio
                     try:
                         noisy_audio = np.array(sample['noisy']['array'], dtype=np.float32)
                         noisy_sr = sample['noisy']['sampling_rate']
@@ -121,7 +121,7 @@ def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", s
                         'errors': error_count
                     })
                     
-                    # Garbage collection mỗi 100 samples
+                    # Garbage collection every 100 samples
                     if (idx + 1) % 100 == 0:
                         gc.collect()
                     
@@ -153,18 +153,18 @@ def download_and_extract_voicebank_demand(output_dir="./voicebank_demand_16k", s
     except Exception as e:
         print(f"\n❌ Error: {e}")
         print("\nTroubleshooting:")
-        print("1. Kiểm tra internet connection")
-        print("2. Cài đặt required packages:")
+        print("1. Check internet connection")
+        print("2. Install required packages:")
         print("   pip install datasets soundfile tqdm numpy")
-        print("3. Giảm RAM usage bằng cách:")
-        print("   - Đóng các ứng dụng khác")
-        print("   - Sử dụng streaming=True (đã bật mặc định)")
-        print("4. Kiểm tra disk space (cần ~2-3 GB)")
+        print("3. Reduce RAM usage by:")
+        print("   - Closing other applications")
+        print("   - Using streaming=True (enabled by default)")
+        print("4. Check disk space (needs ~2-3 GB)")
         raise
 
 
 def print_dataset_summary(output_dir):
-    """In ra thông tin tổng quan về dataset"""
+    """Print dataset summary information"""
     
     print("\n" + "=" * 70)
     print("DATASET SUMMARY")
@@ -215,7 +215,7 @@ def print_dataset_summary(output_dir):
 
 def verify_audio_files(output_dir, num_samples=3):
     """
-    Verify một số audio files để đảm bảo đã extract đúng
+    Verify some audio files to ensure correct extraction
     """
     print("\n" + "=" * 70)
     print("VERIFYING AUDIO FILES...")
@@ -251,11 +251,11 @@ def verify_audio_files(output_dir, num_samples=3):
 
 
 if __name__ == "__main__":
-    # Download và extract dataset
+    # Download and extract dataset
     output_directory = "./voicebank_demand_16k"
     
-    print("\n💡 TIP: Script này sử dụng streaming mode để tiết kiệm RAM")
-    print("         Quá trình có thể mất 10-30 phút tùy tốc độ internet\n")
+    print("\n💡 TIP: This script uses streaming mode to save RAM")
+    print("         Process may take 10-30 minutes depending on internet speed\n")
     
     success = download_and_extract_voicebank_demand(output_directory, streaming=True)
     
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         print("\n" + "=" * 70)
         print("READY TO USE!")
         print("=" * 70)
-        print("\nBạn có thể sử dụng dataset với:")
+        print("\nYou can use the dataset with:")
         print(f"  Clean train audio: {output_directory}/train/clean/")
         print(f"  Noisy train audio: {output_directory}/train/noisy/")
         print(f"  Clean test audio:  {output_directory}/test/clean/")
